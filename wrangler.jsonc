@@ -9,7 +9,7 @@
   // previews 声明启用 Worker Previews，预览实例与生产 Worker 相互隔离；
   // 非生产改动可用 wrangler preview 或 Cloudflare 非生产分支预览独立验证，不影响线上。
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "starlight-7693-tools",
+  "name": "starlight-7693-tools-website",
   "compatibility_date": "2026-11-14",
   "observability": { "enabled": true },
   "assets": {
