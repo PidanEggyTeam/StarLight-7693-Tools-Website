@@ -51,7 +51,7 @@
 2. 安装 `pnpm`：`npm install -g pnpm`（`pnpm --version` 可验证）
 3. 在项目文件夹下执行 `pnpm install`
 4. `pnpm dev` 启动开发服务器（默认 `http://localhost:3000`）
-5. `pnpm build` 先同步字体、再 `next build` 并跑产物校验，输出在 **`out/`**（Cloudflare Workers 直接托管这个目录）
+5. `pnpm build` 先同步字体、再 `next build`、生成网站地图、最后跑产物校验，输出在 **`out/`**（Cloudflare Workers 直接托管这个目录）
 
 提交前这几条都要绿：
 
@@ -59,7 +59,7 @@
 pnpm typecheck     # tsc --noEmit
 pnpm lint          # oxlint
 pnpm format:check  # prettier --check
-pnpm build         # 同步字体 → next build → 产物校验，产物在 out/
+pnpm build         # 同步字体 → next build → 生成 sitemap → 产物校验，产物在 out/
 ```
 
 > [!TIP]
@@ -75,6 +75,10 @@ pnpm build         # 同步字体 → next build → 产物校验，产物在 ou
 
 `public/fonts/` 是生成物、已进 `.gitignore`，仓库不提交字体二进制；`scripts/verify-output.mjs` 每次构建后断言页面齐全、字体分片齐全、HTML / CSS 中无字体 CDN 引用。图标名集中在 `src/data/icons.ts`，站点不内置任何图标文件。
 
+## 网站地图
+
+`scripts/generate-sitemap.mjs` 在构建期扫描 `out/` 里实际生成的 `index.html` 推导可收录路由，写出 `out/sitemap.xml`（标准 sitemap.org `urlset`）。新增工具页只要被 `generateStaticParams` 产出，就会自动进入网站地图，无需维护第二份清单。路由带尾斜杠，与站内链接、Workers 的 `auto-trailing-slash` 一致；首页与五个工具页共 6 条，404 / `_not-found` / `_next` 等内部路由不收录。`scripts/verify-output.mjs` 会校验网站地图存在、格式正确且与页面产物一一对应。
+
 ## 部署方式
 
 本网站以 **assets-only Worker** 部署于 **Cloudflare Workers Static Assets**，站点没有后端，所有内容以静态资源形式存在。仓库里**没有 GitHub Pages 部署流水线**（`.github/workflows/deploy.yml` 及 Pages 专属权限 / environment 已删除）；部署由 Cloudflare 侧一次性设置好 Git 集成（Workers Builds）后自动执行：
@@ -82,7 +86,7 @@ pnpm build         # 同步字体 → next build → 产物校验，产物在 ou
 | 设置项   | 值                                                                                                  |
 | -------- | --------------------------------------------------------------------------------------------------- |
 | 生产分支 | `main`（推送即自动构建部署）                                                                        |
-| 构建命令 | `pnpm build`（同步字体 → `next build` → 产物校验 → `out/`）                                         |
+| 构建命令 | `pnpm build`（同步字体 → `next build` → 生成 sitemap → 产物校验 → `out/`）                          |
 | 部署命令 | `npx wrangler deploy`                                                                               |
 | 产物目录 | 由 `wrangler.jsonc` 的 `assets.directory = ./out` 指定                                              |
 | 预览部署 | 在 Cloudflare 开启非生产分支 / PR 预览；`previews: {}` 声明启用 Worker Previews，与生产 Worker 隔离 |

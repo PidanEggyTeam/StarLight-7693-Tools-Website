@@ -6,7 +6,7 @@
   "packageManager": "pnpm@12.11.2",
   "scripts": {
     "dev": "node scripts/sync-fonts.mjs && next dev",
-    "build": "node scripts/sync-fonts.mjs && next build && node scripts/verify-output.mjs",
+    "build": "node scripts/sync-fonts.mjs && next build && node scripts/generate-sitemap.mjs && node scripts/verify-output.mjs",
     "typecheck": "tsc --noEmit",
     "lint": "oxlint",
     "format": "prettier --write .",
