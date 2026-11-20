@@ -1,11 +1,13 @@
-name: Lint & Format
+name: Lint & Build
 
-# 质量门禁：Prettier（排版）+ oxlint（可能出错的地方）+ tsc（类型）+ 构建
+# 质量门禁：oxlint（可能出错的地方）+ tsc（类型）+ 构建
 #
 # 部署已迁到 Cloudflare Workers：仓库不再保留 GitHub Pages 部署流水线，
 # 也不再需要 pages: write / id-token: write 权限与 github-pages environment。
 # 生产与预览部署由 Cloudflare 侧 Workers Builds 的 Git 集成自动执行，
-# 所以这里除了风格检查，还要自己把 next build 跑一遍：检查不过就不该发版。
+# 所以这里除了 lint / 类型检查，还要自己把 next build 跑一遍：检查不过就不该发版。
+#
+# 排版检查（Prettier）已拆到独立的 prettier.yml，两者互不阻塞。
 on:
   push:
   pull_request:
@@ -20,7 +22,7 @@ concurrency:
 
 jobs:
   quality:
-    name: Prettier + oxlint + tsc + Build
+    name: oxlint + tsc + Build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -29,16 +31,14 @@ jobs:
 
       - uses: actions/setup-node@v5
         with:
-          node-version: 22
+          node-version: latest
           cache: pnpm
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # 先查排版：报错信息是「哪个文件没按 Prettier 排」，比 lint 报错更好定位
-      - name: Prettier (format:check)
-        run: pnpm run format:check
-
+      # oxlint 先跑：任何 lint 报错都会让本 job 直接失败，
+      # 后续 tsc 与 Build 步骤因此不会被触发（无需额外 if 条件）
       - name: oxlint
         run: pnpm run lint
 
